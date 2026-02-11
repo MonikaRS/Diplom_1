@@ -13,93 +13,151 @@ import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
 public class BurgerParameterizedTest {
-    
+
     private Burger burger;
-    
+
+    // Константы для ингредиентов
+    private static final String BUN_NAME = "Булочка";
+    private static final float BUN_PRICE = 50.0f;
+    private static final float BUN_MULTIPLIER = 2.0f;
+
+    private static final String INGREDIENT_1_NAME = "Сыр";
+    private static final IngredientType INGREDIENT_1_TYPE = IngredientType.FILLING;
+    private static final float INGREDIENT_1_PRICE = 40.0f;
+
+    private static final String INGREDIENT_2_NAME = "Соус";
+    private static final IngredientType INGREDIENT_2_TYPE = IngredientType.SAUCE;
+    private static final float INGREDIENT_2_PRICE = 20.0f;
+
+    private static final String INGREDIENT_3_NAME = "Котлета";
+    private static final IngredientType INGREDIENT_3_TYPE = IngredientType.FILLING;
+    private static final float INGREDIENT_3_PRICE = 60.0f;
+
+    // Константы для тестовых данных
+    private static final int EXPECTED_INGREDIENT_COUNT_AFTER_REMOVE = 2;
+    private static final int FIRST_INGREDIENT_INDEX = 0;
+    private static final int SECOND_INGREDIENT_INDEX = 1;
+    private static final int THIRD_INGREDIENT_INDEX = 2;
+    private static final int INITIAL_INGREDIENT_COUNT = 3;
+
     private final int indexToRemove;
     private final int expectedSizeAfterRemove;
-    
+
     public BurgerParameterizedTest(int indexToRemove, int expectedSizeAfterRemove) {
         this.indexToRemove = indexToRemove;
         this.expectedSizeAfterRemove = expectedSizeAfterRemove;
     }
-    
+
     @Parameterized.Parameters(name = "Удаление ингредиента с индекса {0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-            {0, 2},  // Удаляем первый ингредиент
-            {1, 2},  // Удаляем второй ингредиент
-            {2, 2}   // Удаляем третий ингредиент
+                {FIRST_INGREDIENT_INDEX, EXPECTED_INGREDIENT_COUNT_AFTER_REMOVE},
+                {SECOND_INGREDIENT_INDEX, EXPECTED_INGREDIENT_COUNT_AFTER_REMOVE},
+                {THIRD_INGREDIENT_INDEX, EXPECTED_INGREDIENT_COUNT_AFTER_REMOVE}
         });
     }
-    
+
     @Before
     public void setUp() {
-        // Создаем моки как локальные переменные
         Bun mockBun = mock(Bun.class);
         Ingredient mockIngredient1 = mock(Ingredient.class);
         Ingredient mockIngredient2 = mock(Ingredient.class);
         Ingredient mockIngredient3 = mock(Ingredient.class);
-        
+
         burger = new Burger();
-        
-        // Настраиваем поведение моков
-        when(mockBun.getPrice()).thenReturn(50.0f);
-        when(mockBun.getName()).thenReturn("Булочка");
-        
-        when(mockIngredient1.getName()).thenReturn("Сыр");
-        when(mockIngredient1.getType()).thenReturn(IngredientType.FILLING);
-        when(mockIngredient1.getPrice()).thenReturn(40.0f);
-        
-        when(mockIngredient2.getName()).thenReturn("Соус");
-        when(mockIngredient2.getType()).thenReturn(IngredientType.SAUCE);
-        when(mockIngredient2.getPrice()).thenReturn(20.0f);
-        
-        when(mockIngredient3.getName()).thenReturn("Котлета");
-        when(mockIngredient3.getType()).thenReturn(IngredientType.FILLING);
-        when(mockIngredient3.getPrice()).thenReturn(60.0f);
-        
-        // Собираем бургер
+
+        when(mockBun.getPrice()).thenReturn(BUN_PRICE);
+        when(mockBun.getName()).thenReturn(BUN_NAME);
+
+        when(mockIngredient1.getName()).thenReturn(INGREDIENT_1_NAME);
+        when(mockIngredient1.getType()).thenReturn(INGREDIENT_1_TYPE);
+        when(mockIngredient1.getPrice()).thenReturn(INGREDIENT_1_PRICE);
+
+        when(mockIngredient2.getName()).thenReturn(INGREDIENT_2_NAME);
+        when(mockIngredient2.getType()).thenReturn(INGREDIENT_2_TYPE);
+        when(mockIngredient2.getPrice()).thenReturn(INGREDIENT_2_PRICE);
+
+        when(mockIngredient3.getName()).thenReturn(INGREDIENT_3_NAME);
+        when(mockIngredient3.getType()).thenReturn(INGREDIENT_3_TYPE);
+        when(mockIngredient3.getPrice()).thenReturn(INGREDIENT_3_PRICE);
+
         burger.setBuns(mockBun);
         burger.addIngredient(mockIngredient1);
         burger.addIngredient(mockIngredient2);
         burger.addIngredient(mockIngredient3);
     }
-    
+
     @Test
-    public void testRemoveIngredientParameterized() {
-        int initialSize = burger.ingredients.size();
-        
+    public void testRemoveIngredientShouldDecreaseSizeForAnyIndex() {
         burger.removeIngredient(indexToRemove);
-        
-        assertEquals("Неверное количество ингредиентов после удаления", 
-                     expectedSizeAfterRemove, burger.ingredients.size());
-        assertNotEquals("Количество ингредиентов должно измениться", 
-                       initialSize, burger.ingredients.size());
+
+        assertEquals("После удаления ингредиента количество должно уменьшиться на 1",
+                expectedSizeAfterRemove, burger.ingredients.size());
     }
-    
+
     @Test
-    public void testGetPriceAfterRemovingIngredients() {
+    public void testRemoveIngredientShouldHaveCorrectInitialSize() {
+        assertEquals("Начальное количество ингредиентов должно быть 3",
+                INITIAL_INGREDIENT_COUNT, burger.ingredients.size());
+    }
+
+    @Test
+    public void testRemoveIngredientShouldChangeSizeForAnyIndex() {
+        int initialSize = burger.ingredients.size();
+
+        burger.removeIngredient(indexToRemove);
+
+        assertNotEquals("Количество ингредиентов должно измениться после удаления",
+                initialSize, burger.ingredients.size());
+    }
+
+    private float calculateExpectedPriceAfterRemoval(int removedIndex) {
+        float baseBunPrice = BUN_PRICE * BUN_MULTIPLIER;
+        float totalIngredientsPrice = INGREDIENT_1_PRICE + INGREDIENT_2_PRICE + INGREDIENT_3_PRICE;
+        float expectedPrice = baseBunPrice + totalIngredientsPrice;
+
+        if (removedIndex == FIRST_INGREDIENT_INDEX) {
+            expectedPrice -= INGREDIENT_1_PRICE;
+        } else if (removedIndex == SECOND_INGREDIENT_INDEX) {
+            expectedPrice -= INGREDIENT_2_PRICE;
+        } else if (removedIndex == THIRD_INGREDIENT_INDEX) {
+            expectedPrice -= INGREDIENT_3_PRICE;
+        }
+
+        return expectedPrice;
+    }
+
+    @Test
+    public void testGetPriceShouldDecreaseAfterRemovalForAnyIndex() {
         float priceBefore = burger.getPrice();
-        
+
         burger.removeIngredient(indexToRemove);
         float priceAfter = burger.getPrice();
-        
-        assertTrue("Цена должна уменьшиться после удаления ингредиента", 
-                   priceAfter < priceBefore);
-        
-        // Проверяем что цена стала правильной
-        float expectedPrice = 50.0f * 2; // Булочка * 2
-        expectedPrice += 40.0f + 20.0f + 60.0f; // Все ингредиенты
-        
-        // Вычитаем цену удаленного ингредиента
-        switch (indexToRemove) {
-            case 0: expectedPrice -= 40.0f; break; // Сыр
-            case 1: expectedPrice -= 20.0f; break; // Соус
-            case 2: expectedPrice -= 60.0f; break; // Котлета
-        }
-        
-        assertEquals("Неверная цена после удаления ингредиента", 
-                     expectedPrice, priceAfter, 0.001f);
+
+        assertTrue("Цена после удаления ингредиента должна быть меньше исходной",
+                priceAfter < priceBefore);
+    }
+
+    @Test
+    public void testGetPriceShouldCalculateCorrectPriceAfterRemovalForAnyIndex() {
+        burger.removeIngredient(indexToRemove);
+        float priceAfter = burger.getPrice();
+
+        float expectedPrice = calculateExpectedPriceAfterRemoval(indexToRemove);
+
+        assertEquals("Цена после удаления ингредиента рассчитана неверно",
+                expectedPrice, priceAfter, 0.001f);
+    }
+
+    @Test
+    public void testGetPriceShouldCalculateCorrectPriceForFullBurger() {
+        float fullPrice = burger.getPrice();
+        float expectedFullPrice = BUN_PRICE * BUN_MULTIPLIER +
+                INGREDIENT_1_PRICE +
+                INGREDIENT_2_PRICE +
+                INGREDIENT_3_PRICE;
+
+        assertEquals("Цена полного бургера рассчитана неверно",
+                expectedFullPrice, fullPrice, 0.001f);
     }
 }
